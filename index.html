@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic Meta -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyTracker</title>
+  <meta name="description" content="A beautifully minimal study planner to organize subjects, manage tasks, and track your academic progress with clarity.">
+  <meta name="author" content="StudyTracker">
+   <meta name="theme-color" content="#FFFFFF">
+  <link rel="icon" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+
+    :root{
+
+      /* Accent */
+
+      --primary:#0071E3;
+      --primary-hover:#005FCC;
+
+      /* Backgrounds */
+
+      --background:#F5F5F7;
+      --surface:#FFFFFF;
+      --surface-hover:#FAFAFA;
+
+      /* Text */
+
+      --text:#1D1D1F;
+      --text-secondary:#6E6E73;
+
+      /* Borders */
+
+      --border:#E5E5E7;
+
+      /* Status */
+
+      --success:#34C759;
+      --warning:#FF9F0A;
+      --danger:#FF453A;
+
+      /* Radius */
+
+      --radius-sm:10px;
+      --radius:16px;
+      --radius-lg:24px;
+
+      /* Shadow */
+
+      --shadow-sm:
+      0 1px 2px rgba(0,0,0,.04);
+
+      --shadow:
+      0 6px 20px rgba(0,0,0,.06);
+
+      --shadow-lg:
+      0 12px 40px rgba(0,0,0,.08);
+
+      /* Animation */
+
+      --transition:.25s cubic-bezier(.4,0,.2,1);
+
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    html{
+      scroll-behavior:smooth;
+    }
+
+    body{
+
+      font-family:'Inter',sans-serif;
+
+      background:var(--background);
+
+      color:var(--text);
+
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+
+      text-rendering:optimizeLegibility;
+
+      line-height:1.6;
+
+    }
+
+    h1,h2,h3,h4,h5,h6{
+
+      font-weight:700;
+
+      letter-spacing:-0.03em;
+
+      color:var(--text);
+
+    }
+
+    a{
+
+      color:var(--primary);
+
+      text-decoration:none;
+
+      transition:var(--transition);
+
+    }
+
+    a:hover{
+
+      color:var(--primary-hover);
+
+    }
+
+    button{
+
+      font-family:inherit;
+
+    }
+
+    ::selection{
+
+      background:rgba(0,113,227,.18);
+
+      color:var(--text);
+
+    }
+
+  </style>
+
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-content">
+            <div class="header-left">
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <h1>Study Tracker</h1>
+                </div>
+                <p class="subtitle">Organize your coursework and track your progress.</p>
+            </div>
+            <div class="sticky-notes" id="sticky-notes"></div>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="container">
+            <div id="nav-tabs"></div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="view-home" class="view"></div>
+        <div id="view-subject" class="view"></div>
+    </main>
+
+    <script src="script.js"></script>
+    <footer class="footer">
+        <div class="container footer-content">
+            <p align="center" style="font-family: 'Architects Daughter', cursive;">Made by Angel Guragain</p>
+            <p align="center" style="font-family: 'Architects Daughter', cursive;">Made for educational purposes</p>
+        </div>
+</body>
+</html>
