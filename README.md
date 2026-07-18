@@ -33,7 +33,7 @@ No installation or backend required!
 
 ## 📸 Preview
 
-![Study Tracker Preview](preview.png)
+![Study Tracker Preview](previw.png)
 
 ## 👤 Author
 
