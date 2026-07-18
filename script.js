@@ -6,6 +6,7 @@ const QUOTES = [
 ];
 
 let state = loadState();
+let chartInstance = null;
 
 function loadState() {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -78,6 +79,26 @@ function deleteTask(taskId) {
     }
 }
 
+function deleteSubject(subjectId) {
+    if (!confirm('Delete this subject and all its teachers and tasks?')) return;
+    state.subjects = state.subjects.filter(s => s.id !== subjectId);
+    
+    if (state.activeSubjectId === subjectId) {
+        state.activeView = 'home';
+        state.activeSubjectId = null;
+    }
+    saveState();
+}
+
+function deleteTeacher(subjectId, teacherId) {
+    if (!confirm('Delete this teacher and all their tasks?')) return;
+    const subject = state.subjects.find(s => s.id === subjectId);
+    if (!subject) return;
+    
+    subject.teachers = subject.teachers.filter(t => t.id !== teacherId);
+    saveState();
+}
+
 function switchView(view, subjectId = null) {
     state.activeView = view;
     state.activeSubjectId = subjectId;
@@ -88,7 +109,7 @@ function switchView(view, subjectId = null) {
 function getWeekStart(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const diff = d.getDate() - day;
     d.setDate(diff);
     d.setHours(0, 0, 0, 0);
     return d;
@@ -103,6 +124,7 @@ function calculateStats() {
     let thisWeekCount = 0;
     let lastWeekCount = 0;
     let pendingCount = 0;
+    let overallCompleted = 0;
     const weeklyData = new Array(4).fill(0);
 
     for (const subject of state.subjects) {
@@ -110,22 +132,25 @@ function calculateStats() {
             for (const task of teacher.tasks) {
                 if (!task.done) {
                     pendingCount++;
-                    continue;
+                } else {
+                    overallCompleted++;
                 }
 
-                const completedDate = new Date(task.completedAt);
-                
-                if (completedDate >= thisWeekStart) thisWeekCount++;
-                else if (completedDate >= lastWeekStart) lastWeekCount++;
+                if (task.completedAt) {
+                    const completedDate = new Date(task.completedAt);
+                    
+                    if (completedDate >= thisWeekStart) thisWeekCount++;
+                    else if (completedDate >= lastWeekStart) lastWeekCount++;
 
-                for (let i = 0; i < 4; i++) {
-                    const weekStart = new Date(thisWeekStart);
-                    weekStart.setDate(weekStart.getDate() - (i * 7));
-                    const weekEnd = new Date(weekStart);
-                    weekEnd.setDate(weekEnd.getDate() + 7);
+                    for (let i = 0; i < 4; i++) {
+                        const weekStart = new Date(thisWeekStart);
+                        weekStart.setDate(weekStart.getDate() - (i * 7));
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekEnd.getDate() + 7);
 
-                    if (completedDate >= weekStart && completedDate < weekEnd) {
-                        weeklyData[3 - i]++;
+                        if (completedDate >= weekStart && completedDate < weekEnd) {
+                            weeklyData[3 - i]++;
+                        }
                     }
                 }
             }
@@ -140,10 +165,68 @@ function calculateStats() {
         trendText = '+100%';
     }
 
-    return { thisWeekCount, trendText, pendingCount, weeklyData };
+    return { thisWeekCount, trendText, pendingCount, overallCompleted, weeklyData };
 }
 
-let chartInstance = null;
+function exportData() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'study-tracker-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const importedState = JSON.parse(e.target.result);
+            if (importedState && importedState.subjects && Array.isArray(importedState.subjects)) {
+                state = importedState;
+                if (!state.activeView) state.activeView = 'home';
+                if (!state.showAddSubject) state.showAddSubject = false;
+                saveState();
+                showNotification('Data imported successfully! Your tracker is restored.');
+            } else {
+                showNotification('Invalid file format. Please upload a valid backup.');
+            }
+        } catch (error) {
+            showNotification('Error reading file. Please upload a valid JSON backup.');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function showNotification(message) {
+    const notification = document.getElementById('notification');
+    const messageEl = document.getElementById('notification-message');
+    if (!notification || !messageEl) return;
+    
+    messageEl.textContent = message;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        hideNotification();
+    }, 3000);
+}
+
+function hideNotification() {
+    const notification = document.getElementById('notification');
+    if (notification) {
+        notification.classList.remove('show');
+    }
+}
+
+function closeNotification() {
+    hideNotification();
+}
 
 function renderChart(weeklyData) {
     const ctx = document.getElementById('progressChart')?.getContext('2d');
@@ -151,13 +234,19 @@ function renderChart(weeklyData) {
     
     if (chartInstance) chartInstance.destroy();
 
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const textColor = isDarkMode ? '#A8A29E' : '#78716C';
+    const gridColor = isDarkMode ? '#2A2A2A' : '#F5F5F4';
+    const chartColor = isDarkMode ? '#10B981' : '#1C1917';
+    const tooltipBg = isDarkMode ? '#1A1A1A' : '#1C1917';
+
     chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['3 weeks ago', '2 weeks ago', 'Last week', 'This week'],
             datasets: [{
                 data: weeklyData,
-                backgroundColor: '#1C1917',
+                backgroundColor: chartColor,
                 borderRadius: 4,
                 barThickness: 32,
             }]
@@ -168,7 +257,7 @@ function renderChart(weeklyData) {
             plugins: { 
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1C1917',
+                    backgroundColor: tooltipBg,
                     titleFont: { family: '-apple-system, sans-serif' },
                     bodyFont: { family: '-apple-system, sans-serif' },
                     padding: 10,
@@ -180,14 +269,14 @@ function renderChart(weeklyData) {
                 y: { 
                     beginAtZero: true, 
                     ticks: { 
-                        color: '#78716C', 
+                        color: textColor, 
                         font: { size: 11 },
                         stepSize: 1 
                     }, 
-                    grid: { color: '#F5F5F4', drawBorder: false } 
+                    grid: { color: gridColor, drawBorder: false } 
                 },
                 x: { 
-                    ticks: { color: '#78716C', font: { size: 11 } }, 
+                    ticks: { color: textColor, font: { size: 11 } }, 
                     grid: { display: false } 
                 }
             }
@@ -214,21 +303,20 @@ function render() {
 
 function renderStickyNotes() {
     const container = document.getElementById('sticky-notes');
+    if (!container) return;
     container.innerHTML = '';
     
-    QUOTES.forEach((quote, index) => {
+    QUOTES.forEach((quote) => {
         const note = document.createElement('div');
         note.className = 'sticky-note';
-        note.innerHTML = `
-            
-            <div class="sticky-note-text">"${quote}"</div>
-        `;
+        note.innerHTML = `<div class="sticky-note-text">"${quote}"</div>`;
         container.appendChild(note);
     });
 }
 
 function renderNavTabs() {
     const navContainer = document.getElementById('nav-tabs');
+    if (!navContainer) return;
     navContainer.innerHTML = '';
     
     if (state.showAddSubject) {
@@ -316,6 +404,8 @@ function renderNavTabs() {
 
 function renderHomeView() {
     const homeView = document.getElementById('view-home');
+    if (!homeView) return;
+    
     const stats = calculateStats();
     
     let html = `
@@ -333,6 +423,10 @@ function renderHomeView() {
                     <span class="stat-label">Pending tasks</span>
                     <span class="stat-value">${stats.pendingCount}</span>
                 </div>
+                <div class="stat-card">
+                    <span class="stat-label">Overall completed</span>
+                    <span class="stat-value">${stats.overallCompleted}</span>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="progressChart"></canvas>
@@ -340,13 +434,73 @@ function renderHomeView() {
         </section>
     `;
     
+    html += `
+        <section class="backup-section">
+            <div class="backup-info">
+                <div class="backup-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <div>
+                    <h3>Backup & Restore</h3>
+                    <p>Download your data to keep it safe, or upload a previous backup.</p>
+                </div>
+            </div>
+            <div class="backup-actions">
+                <button id="btn-export" class="backup-btn btn-export">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export Data
+                </button>
+                <button id="btn-import-trigger" class="backup-btn btn-import">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Import Data
+                </button>
+                <input type="file" id="file-import" accept=".json">
+            </div>
+        </section>
+    `;
+    
     homeView.innerHTML = html;
     
     renderChart(stats.weeklyData);
+
+    document.getElementById('btn-export').onclick = exportData;
+    
+    document.getElementById('btn-import-trigger').onclick = () => {
+        document.getElementById('file-import').click();
+    };
+    
+    document.getElementById('file-import').onchange = importData;
+
+    const notifClose = document.querySelector('.notification-close');
+    if (notifClose) {
+        notifClose.onclick = closeNotification;
+    }
+    
+    const notifOverlay = document.getElementById('notification');
+    if (notifOverlay) {
+        notifOverlay.onclick = (e) => {
+            if (e.target.id === 'notification') {
+                hideNotification();
+            }
+        };
+    }
 }
 
 function renderSubjectView() {
     const subjectView = document.getElementById('view-subject');
+    if (!subjectView) return;
     
     if (!state.activeSubjectId) {
         subjectView.innerHTML = '<div class="empty-state">Select a subject from the tabs above.</div>';
@@ -362,6 +516,7 @@ function renderSubjectView() {
     let html = `
         <div class="subject-header">
             <h2 class="subject-title">${escapeHtml(subject.name)}</h2>
+            <button class="delete-btn" data-subject-id="${subject.id}" title="Delete subject">−</button>
         </div>
         
         <div class="add-teacher-section">
@@ -380,6 +535,7 @@ function renderSubjectView() {
                 <div class="teacher-block">
                     <div class="teacher-header">
                         <div class="teacher-name">${escapeHtml(teacher.name)}</div>
+                        <button class="delete-btn" data-teacher-id="${teacher.id}" title="Delete teacher">−</button>
                     </div>
                     <div class="add-task-form">
                         <input type="text" data-teacher-id="${teacher.id}" placeholder="Add new task" class="input-field task-input">
@@ -398,7 +554,7 @@ function renderSubjectView() {
                                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </div>
                             <span class="task-text" data-id="${task.id}">${escapeHtml(task.title)}</span>
-                            <button class="task-delete" data-id="${task.id}" title="Delete task">−</button>
+                            <button class="delete-btn" data-id="${task.id}" title="Delete task">−</button>
                         </div>
                     `;
                 });
@@ -449,10 +605,24 @@ function renderSubjectView() {
         el.onclick = () => toggleTask(el.dataset.id);
     });
     
-    document.querySelectorAll('.task-delete').forEach(btn => {
+    document.querySelectorAll('.task-item .delete-btn').forEach(btn => {
         btn.onclick = (e) => {
             e.stopPropagation();
             deleteTask(btn.dataset.id);
+        };
+    });
+
+    document.querySelectorAll('.teacher-header .delete-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            deleteTeacher(subject.id, btn.dataset.teacherId);
+        };
+    });
+
+    document.querySelectorAll('.subject-header .delete-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            deleteSubject(btn.dataset.subjectId);
         };
     });
 }
@@ -462,5 +632,19 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+const themeToggle = document.getElementById('theme-toggle');
+const savedTheme = localStorage.getItem('theme');
+
+if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+}
+
+themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    render();
+});
 
 render();
