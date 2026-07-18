@@ -1,144 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Basic Meta -->
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyTracker</title>
-  <meta name="description" content="A beautifully minimal study planner to organize subjects, manage tasks, and track your academic progress with clarity.">
-  <meta name="author" content="StudyTracker">
-   <meta name="theme-color" content="#FFFFFF">
-  <link rel="icon" href="icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="style.css">
-
-  <style>
-
-    :root{
-
-      /* Accent */
-
-      --primary:#0071E3;
-      --primary-hover:#005FCC;
-
-      /* Backgrounds */
-
-      --background:#F5F5F7;
-      --surface:#FFFFFF;
-      --surface-hover:#FAFAFA;
-
-      /* Text */
-
-      --text:#1D1D1F;
-      --text-secondary:#6E6E73;
-
-      /* Borders */
-
-      --border:#E5E5E7;
-
-      /* Status */
-
-      --success:#34C759;
-      --warning:#FF9F0A;
-      --danger:#FF453A;
-
-      /* Radius */
-
-      --radius-sm:10px;
-      --radius:16px;
-      --radius-lg:24px;
-
-      /* Shadow */
-
-      --shadow-sm:
-      0 1px 2px rgba(0,0,0,.04);
-
-      --shadow:
-      0 6px 20px rgba(0,0,0,.06);
-
-      --shadow-lg:
-      0 12px 40px rgba(0,0,0,.08);
-
-      /* Animation */
-
-      --transition:.25s cubic-bezier(.4,0,.2,1);
-
-    }
-
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-    }
-
-    html{
-      scroll-behavior:smooth;
-    }
-
-    body{
-
-      font-family:'Inter',sans-serif;
-
-      background:var(--background);
-
-      color:var(--text);
-
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-
-      text-rendering:optimizeLegibility;
-
-      line-height:1.6;
-
-    }
-
-    h1,h2,h3,h4,h5,h6{
-
-      font-weight:700;
-
-      letter-spacing:-0.03em;
-
-      color:var(--text);
-
-    }
-
-    a{
-
-      color:var(--primary);
-
-      text-decoration:none;
-
-      transition:var(--transition);
-
-    }
-
-    a:hover{
-
-      color:var(--primary-hover);
-
-    }
-
-    button{
-
-      font-family:inherit;
-
-    }
-
-    ::selection{
-
-      background:rgba(0,113,227,.18);
-
-      color:var(--text);
-
-    }
-
-  </style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%231C1917'/%3E%3Cpath d='M256 140C200 140 150 165 115 205V365C150 335 200 320 256 320C312 320 362 335 397 365V205C362 165 312 140 256 140Z' fill='none' stroke='%23FCFCFA' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M256 140V320' stroke='%23FCFCFA' stroke-width='28' stroke-linecap='round'/%3E%3Cpath d='M330 210L365 245L410 175' fill='none' stroke='%2310B981' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+    </button>
 
     <header class="header">
         <div class="container header-content">
@@ -167,10 +50,15 @@
     </main>
 
     <script src="script.js"></script>
-    <footer class="footer">
-        <div class="container footer-content">
-            <p align="center" style="font-family: 'Architects Daughter', cursive;">Made by <a href="https://www.instagram.com/the_angelguragain/" target="_blank">Angel Guragain</a></p>
-            <p align="center" style="font-family: 'Architects Daughter', cursive;">Made for educational purposes</p>
+    <div id="notification" class="notification">
+    <div class="notification-content">
+        <div class="notification-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
         </div>
+        <div class="notification-text" id="notification-message">Success!</div>
+    </div>
+</div>
 </body>
 </html>
